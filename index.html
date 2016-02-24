@@ -1,0 +1,169 @@
+<!DOCTYPE HTML>
+<html>
+<head>
+    <style>
+        body {
+            margin: 0px;
+            padding: 0px;
+        }
+        canvas {
+            border: solid 10px red;
+        }
+    </style>
+</head>
+<body>
+<canvas id="myCanvas" width="850" height="850"></canvas>
+<script src="rng.js"></script>
+<script>
+    var canvas = document.getElementById('myCanvas');
+    var context = canvas.getContext('2d');
+    var seed = 'sdfujhiksdrfuyjhiksdfguyjhiksdtfguyhikwerfuyhikserfuyjhiksedrtf';
+
+    // Seedable Random Number Generator
+    var rng = new RNG(seed);
+
+    // Width and Height of Maze
+    var width = 17;
+    var height = 17;
+
+    // Holder for Rows
+    var rows = [];
+    // Keeps track of movement of positions
+    var stack = [];
+
+    // Generates empty maze
+    for (var i = 0; i < height; i++) {
+        var row = [];
+        for (var j = 0; j < width; j++) {
+            row.push(0);
+        }
+        rows.push(row);
+    }
+
+    // Sets Current Position of maze generator
+    var currentPosition = new Position(1,1);
+
+    // Maze Logic
+    do {
+        var dirs = currentPosition.getPossibleDirections();
+
+        // Check for possible directions, if none are available back out of the maze
+        if (dirs.length == 0) {
+            stack.pop();
+            currentPosition.x = stack[stack.length - 1].x;
+            currentPosition.y = stack[stack.length - 1].y;
+        } else {
+            // Get list of directions and go a random available position
+            var direction = Math.floor(rng.uniform() * dirs.length);
+            var dirString = dirs[direction];
+
+            switch(dirString) {
+                case "up":
+                    currentPosition.goUp();
+                    break;
+                case "down":
+                    currentPosition.goDown();
+                    break;
+                case "left":
+                    currentPosition.goLeft();
+                    break;
+                case "right":
+                    currentPosition.goRight();
+                    break;
+                default:
+                    break;
+            }
+        }
+    } while (stack.length > 1);
+
+    // Logs Maze for Debug purposes
+    //printRows(rows);
+
+    // Position Object
+    function Position (x, y) {
+        this.x = x;
+        this.y = y;
+
+        rows[y][x] = 1;
+        stack.push({x: this.x, y: this.y});
+
+        this.hasUp = function () {
+            return this.y + 2 < height;
+        };
+        this.hasDown = function () {
+            return this.y - 2 > -1;
+        };
+        this.hasLeft = function () {
+            return this.x - 2 > -1;
+        };
+        this.hasRight = function () {
+            return this.x + 2 < width;
+        };
+        this.getPossibleDirections = function() {
+            var directions = [];
+            if (this.hasUp() && rows[this.y + 2][this.x] == 0) {
+                directions.push("up");
+            }
+            if (this.hasDown() && rows[this.y - 2][this.x] == 0) {
+                directions.push("down");
+            }
+            if (this.hasLeft() && rows[this.y][this.x - 2] == 0) {
+                directions.push("left");
+            }
+            if (this.hasRight() && rows[this.y][this.x + 2] == 0) {
+                directions.push("right");
+            }
+            return directions;
+        };
+        this.goUp = function () {
+            rows[this.y + 1][this.x] = 1;
+            rows[this.y + 2][this.x] = 1;
+            this.y = this.y + 2;
+            stack.push({x: this.x, y: this.y});
+        };
+        this.goDown = function () {
+            rows[this.y - 1][this.x] = 1;
+            rows[this.y - 2][this.x] = 1;
+            this.y = this.y - 2;
+            stack.push({x: this.x, y: this.y});
+        };
+        this.goLeft = function () {
+            rows[this.y][this.x - 1] = 1;
+            rows[this.y][this.x - 2] = 1;
+            this.x = this.x - 2;
+            stack.push({x: this.x, y: this.y});
+        };
+        this.goRight = function () {
+            rows[this.y][this.x + 1] = 1;
+            rows[this.y][this.x + 2] = 1;
+            this.x = this.x + 2;
+            stack.push({x: this.x, y: this.y});
+        };
+    }
+
+    function printRows(array) {
+        var str = "";
+        for (var i = 0; i < array.length; i++) {
+            for (var j = 0; j < array[i].length; j++) {
+                str += array[i][j].toString();
+            }
+            str += "\n";
+        }
+        console.log(str);
+    }
+
+    // Draw logic
+    for (var i = 0; i < rows.length; i++) {
+        for (var j = 0; j < rows[i].length; j++) {
+            if (rows[i][j] == 0) {
+                context.beginPath();
+                context.rect(j*50, i*50, 50, 50);
+                context.fillStyle = 'black';
+                context.fill();
+            }
+        }
+    }
+
+</script>
+</body>
+</html>
